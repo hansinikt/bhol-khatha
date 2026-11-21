@@ -29,7 +29,8 @@ class GnaniSttProvider implements SttProvider {
       // TODO: use Gnani's real auth header names.
       ..headers['Authorization'] = 'Bearer $apiKey'
       ..fields['language'] = _langCodes[lang] ?? 'hi-IN'
-      ..files.add(http.MultipartFile.fromBytes('audio', audio, filename: 'speech.wav'));
+      ..files.add(
+          http.MultipartFile.fromBytes('audio', audio, filename: 'speech.wav'));
 
     final streamed = await req.send().timeout(const Duration(seconds: 15));
     final body = await streamed.stream.bytesToString();

@@ -13,19 +13,60 @@ class ParsedUtterance {
 
 class IntentParser {
   static const _credit = {
-    'udhaar', 'udhar', 'credit', 'baaki', 'liya', 'took', 'saala', 'kadan', 'appu',
+    'udhaar',
+    'udhar',
+    'credit',
+    'baaki',
+    'liya',
+    'took',
+    'saala',
+    'kadan',
+    'appu',
   };
   static const _payment = {
-    'diya', 'paid', 'payment', 'jama', 'returned', 'kattinaru', 'kattaru',
-    'kodutha', 'ichcharu', 'kuduthaanga',
+    'diya',
+    'paid',
+    'payment',
+    'jama',
+    'returned',
+    'kattinaru',
+    'kattaru',
+    'kodutha',
+    'ichcharu',
+    'kuduthaanga',
   };
   static const _query = {
-    'balance', 'kitna', 'ethna', 'entha', 'evvalavu', 'baki',
+    'balance',
+    'kitna',
+    'ethna',
+    'entha',
+    'evvalavu',
+    'baki',
   };
-  static const _correctionStart = {'nahi', 'nahin', 'no', 'illa', 'kaadu', 'illai'};
+  static const _correctionStart = {
+    'nahi',
+    'nahin',
+    'no',
+    'illa',
+    'kaadu',
+    'illai'
+  };
   static const _stop = {
-    'ka', 'ki', 'ko', 'ne', 'hai', 'the', 'is', 'of', 'rupees', 'rupaye', 'rs',
-    'ye', 'woh', 'how', 'much',
+    'ka',
+    'ki',
+    'ko',
+    'ne',
+    'hai',
+    'the',
+    'is',
+    'of',
+    'rupees',
+    'rupaye',
+    'rs',
+    'ye',
+    'woh',
+    'how',
+    'much',
   };
 
   static ParsedUtterance parse(String text) {
@@ -42,10 +83,12 @@ class IntentParser {
       return ParsedUtterance(Intent.queryBalance, customerName: name);
     }
     if (_hasWord(words, _payment)) {
-      return ParsedUtterance(Intent.recordPayment, customerName: name, amount: amount);
+      return ParsedUtterance(Intent.recordPayment,
+          customerName: name, amount: amount);
     }
     if (_hasWord(words, _credit)) {
-      return ParsedUtterance(Intent.addCredit, customerName: name, amount: amount);
+      return ParsedUtterance(Intent.addCredit,
+          customerName: name, amount: amount);
     }
     return const ParsedUtterance(Intent.unknown);
   }
@@ -54,10 +97,18 @@ class IntentParser {
       words.any(keys.contains);
 
   static String? _guessName(List<String> words) {
-    final skip = {..._credit, ..._payment, ..._query, ..._stop, ..._correctionStart};
+    final skip = {
+      ..._credit,
+      ..._payment,
+      ..._query,
+      ..._stop,
+      ..._correctionStart
+    };
     for (final w in words) {
       if (skip.contains(w) || NumberNormalizer.parse(w) != null) continue;
-      if (RegExp(r'^[a-z\u0900-\u097F\u0C80-\u0CFF\u0C00-\u0C7F\u0B80-\u0BFF]+$').hasMatch(w)) {
+      if (RegExp(
+              r'^[a-z\u0900-\u097F\u0C80-\u0CFF\u0C00-\u0C7F\u0B80-\u0BFF]+$')
+          .hasMatch(w)) {
         return w[0].toUpperCase() + w.substring(1);
       }
     }

@@ -1,4 +1,6 @@
-import 'package:flutter/material.dart';
+// ignore_for_file: deprecated_member_use
+
+import 'package:flutter/material.dart' hide Intent;
 import '../../core/config/app_config.dart';
 import '../../data/local/database.dart';
 import '../../domain/usecases/ledger_service.dart';
@@ -31,7 +33,10 @@ class _HomeScreenState extends State<HomeScreen> {
   final _textCtrl = TextEditingController();
   late final LedgerService _ledger = LedgerService(widget.db);
   late final SttRouter _router = SttRouter(
-    online: [GnaniSttProvider(apiKey: AppConfig.gnaniApiKey, baseUrl: AppConfig.gnaniBaseUrl)],
+    online: [
+      GnaniSttProvider(
+          apiKey: AppConfig.gnaniApiKey, baseUrl: AppConfig.gnaniBaseUrl)
+    ],
     offline: OnDeviceSttProvider(),
   );
 
@@ -88,8 +93,8 @@ class _HomeScreenState extends State<HomeScreen> {
       final name = _session.pending!.customerName!;
       final bal = await _ledger.balanceByName(name);
       _session.cancel();
-      setState(() => _message =
-          bal == null ? '$name not found' : '$name owes ₹$bal');
+      setState(() =>
+          _message = bal == null ? '$name not found' : '$name owes ₹$bal');
       return;
     }
     setState(() => _message = switch (_session.state) {
@@ -117,7 +122,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _describe(ParsedUtterance p) {
-    final kind = p.intent == Intent.addCredit ? 'Credit given' : 'Payment received';
+    final kind =
+        p.intent == Intent.addCredit ? 'Credit given' : 'Payment received';
     return '${p.customerName}: $kind ₹${p.amount}';
   }
 
@@ -132,7 +138,8 @@ class _HomeScreenState extends State<HomeScreen> {
             value: _lang,
             underline: const SizedBox(),
             items: _langs.entries
-                .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
+                .map(
+                    (e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
                 .toList(),
             onChanged: (v) => setState(() => _lang = v!),
           ),
@@ -144,9 +151,12 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           children: [
             if (_transcript.isNotEmpty)
-              Text('"$_transcript"', style: Theme.of(context).textTheme.titleMedium),
+              Text('"$_transcript"',
+                  style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
-            Text(_message, textAlign: TextAlign.center, style: const TextStyle(fontSize: 18)),
+            Text(_message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 18)),
             if (confirming) ...[
               const SizedBox(height: 16),
               Card(
@@ -156,9 +166,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               Row(children: [
-                Expanded(child: OutlinedButton(onPressed: _cancel, child: const Text('Cancel'))),
+                Expanded(
+                    child: OutlinedButton(
+                        onPressed: _cancel, child: const Text('Cancel'))),
                 const SizedBox(width: 12),
-                Expanded(child: FilledButton(onPressed: _confirm, child: const Text('Confirm'))),
+                Expanded(
+                    child: FilledButton(
+                        onPressed: _confirm, child: const Text('Confirm'))),
               ]),
             ],
             const Spacer(),
@@ -167,7 +181,9 @@ class _HomeScreenState extends State<HomeScreen> {
               onLongPressEnd: (_) => _stopRecording(),
               child: CircleAvatar(
                 radius: 56,
-                backgroundColor: _recording ? Colors.red : Theme.of(context).colorScheme.primary,
+                backgroundColor: _recording
+                    ? Colors.red
+                    : Theme.of(context).colorScheme.primary,
                 child: _busy
                     ? const CircularProgressIndicator(color: Colors.white)
                     : const Icon(Icons.mic, size: 48, color: Colors.white),

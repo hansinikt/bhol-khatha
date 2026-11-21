@@ -1,0 +1,7 @@
+{
+  "elements": {},
+  "imports": [
+    "package:http/http.dart",
+    "package:bolkhata/voice/stt/stt_provider.dart"
+  ]
+}

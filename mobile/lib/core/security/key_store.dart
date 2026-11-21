@@ -10,7 +10,8 @@ class KeyStore {
     var key = await _storage.read(key: _keyName);
     if (key == null) {
       final r = Random.secure();
-      key = List.generate(32, (_) => r.nextInt(256).toRadixString(16).padLeft(2, '0')).join();
+      key = List.generate(
+          32, (_) => r.nextInt(256).toRadixString(16).padLeft(2, '0')).join();
       await _storage.write(key: _keyName, value: key);
     }
     return key;

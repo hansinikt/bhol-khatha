@@ -52,11 +52,10 @@ class AppDatabase extends _$AppDatabase {
           amountRupees: amount,
           note: Value(note)));
 
-  Future<List<Transaction>> historyFor(int customerId) =>
-      (select(transactions)
-            ..where((t) => t.customerId.equals(customerId))
-            ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
-          .get();
+  Future<List<Transaction>> historyFor(int customerId) => (select(transactions)
+        ..where((t) => t.customerId.equals(customerId))
+        ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
+      .get();
 
   Future<Customer?> findByName(String name) => (select(customers)
         ..where((c) => c.name.lower().equals(name.toLowerCase())))

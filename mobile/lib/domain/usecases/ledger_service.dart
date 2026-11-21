@@ -28,7 +28,8 @@ class LedgerService {
   /// Saves a confirmed entry; returns the customer's new balance.
   Future<int> save(ParsedUtterance u, {String lang = 'hi'}) async {
     final existing = await db.findByName(u.customerName!);
-    final id = existing?.id ?? await db.addCustomer(u.customerName!, lang: lang);
+    final id =
+        existing?.id ?? await db.addCustomer(u.customerName!, lang: lang);
     await db.addTransaction(
         id, u.intent == Intent.addCredit ? 'credit' : 'payment', u.amount!);
     return balanceOf(id);

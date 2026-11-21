@@ -27,6 +27,7 @@ class SttRouter {
         errors.add('${p.name}: $e');
       }
     }
-    throw SttException(errors.isEmpty ? 'No STT provider available' : errors.join(' | '));
+    throw SttException(
+        errors.isEmpty ? 'No STT provider available' : errors.join(' | '));
   }
 }

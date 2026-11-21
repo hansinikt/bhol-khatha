@@ -1,0 +1,15 @@
+{
+  "elements": {},
+  "imports": [
+    "package:flutter/material.dart",
+    "package:bolkhata/core/config/app_config.dart",
+    "package:bolkhata/data/local/database.dart",
+    "package:bolkhata/domain/usecases/ledger_service.dart",
+    "package:bolkhata/voice/audio/recorder.dart",
+    "package:bolkhata/voice/nlu/intent_parser.dart",
+    "package:bolkhata/voice/stt/gnani_stt_provider.dart",
+    "package:bolkhata/voice/stt/ondevice_stt_provider.dart",
+    "package:bolkhata/voice/stt/stt_router.dart",
+    "package:bolkhata/voice/voice_session_controller.dart"
+  ]
+}

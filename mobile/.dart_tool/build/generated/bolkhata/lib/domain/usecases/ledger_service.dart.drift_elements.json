@@ -1,0 +1,1 @@
+{"valid_import":true,"imports":[{"uri":"package:bolkhata/data/local/database.dart","transitive":false},{"uri":"package:bolkhata/voice/nlu/intent_parser.dart","transitive":false},{"uri":"package:bolkhata/domain/entities/ledger_entry.dart","transitive":false},{"uri":"package:bolkhata/domain/services/balance_calculator.dart","transitive":false}],"elements":[]}

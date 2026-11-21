@@ -1,73 +1,77 @@
-import 'dart:io';
-import 'package:drift/drift.dart';
-import 'package:drift/native.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
-import 'package:sqlcipher_flutter_libs/sqlcipher_flutter_libs.dart';
-import 'package:sqlite3/open.dart';
+class NumberNormalizer {
+  static const _ones = <String, int>{
+    'zero': 0,
+    'ek': 1,
+    'one': 1,
+    'do': 2,
+    'two': 2,
+    'teen': 3,
+    'three': 3,
+    'char': 4,
+    'chaar': 4,
+    'four': 4,
+    'paanch': 5,
+    'five': 5,
+    'chhe': 6,
+    'six': 6,
+    'saat': 7,
+    'seven': 7,
+    'aath': 8,
+    'eight': 8,
+    'nau': 9,
+    'nine': 9,
+    'das': 10,
+    'ten': 10,
+    'gyarah': 11,
+    'eleven': 11,
+    'barah': 12,
+    'twelve': 12,
+    'terah': 13,
+    'chaudah': 14,
+    'pandrah': 15,
+    'solah': 16,
+    'satrah': 17,
+    'atharah': 18,
+    'unnis': 19,
+    'bees': 20,
+    'twenty': 20,
+    'chalees': 40,
+    'chalis': 40,
+  };
 
-part 'database.g.dart';
+  static int? parse(String text) {
+    final normalized = text.toLowerCase();
+    final digits = RegExp(r'\d[\d,]*')
+        .allMatches(normalized)
+        .map((m) => m.group(0)!.replaceAll(',', ''))
+        .toList();
+    if (digits.isNotEmpty) {
+      return int.tryParse(digits.join());
+    }
 
-class Customers extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  TextColumn get name => text()();
-  TextColumn get phone => text().nullable()();
-  TextColumn get preferredLang => text().withDefault(const Constant('hi'))();
-  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+    final words = normalized.split(RegExp(r'[^a-zA-Z\u0900-\u097F]+'));
+    var total = 0;
+    var section = 0;
+    var found = false;
+    for (final word in words) {
+      final value = _ones[word];
+      if (value != null) {
+        found = true;
+        section += value;
+      } else if (word == 'sau' || word == 'hundred') {
+        found = true;
+        section = (section == 0 ? 1 : section) * 100;
+      } else if (word == 'hazar' || word == 'hazaar' || word == 'thousand') {
+        found = true;
+        total += (section == 0 ? 1 : section) * 1000;
+        section = 0;
+      } else if (word == 'lakh' || word == 'lacs' || word == 'lakhh') {
+        found = true;
+        total += (section == 0 ? 1 : section) * 100000;
+        section = 0;
+      }
+    }
+    if (!found) return null;
+    return total + section;
+  }
 }
-
-class Transactions extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  IntColumn get customerId => integer().references(Customers, #id)();
-  TextColumn get type => text()(); // 'credit' | 'payment'
-  IntColumn get amountRupees => integer()();
-  TextColumn get note => text().nullable()();
-  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
-  BoolColumn get synced => boolean().withDefault(const Constant(false))();
-}
-
-class VoiceQueue extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  TextColumn get audioPath => text()();
-  TextColumn get lang => text()();
-  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
-}
-
-@DriftDatabase(tables: [Customers, Transactions, VoiceQueue])
-class AppDatabase extends _$AppDatabase {
-  AppDatabase(String encryptionKey) : super(_open(encryptionKey));
-
-  @override
-  int get schemaVersion => 1;
-
-  Future<int> addCustomer(String name, {String? phone, String lang = 'hi'}) =>
-      into(customers).insert(CustomersCompanion.insert(
-          name: name, phone: Value(phone), preferredLang: Value(lang)));
-
-  Future<int> addTransaction(int customerId, String type, int amount,
-          {String? note}) =>
-      into(transactions).insert(TransactionsCompanion.insert(
-          customerId: customerId,
-          type: type,
-          amountRupees: amount,
-          note: Value(note)));
-
-  Future<List<Transaction>> historyFor(int customerId) =>
-      (select(transactions)
-            ..where((t) => t.customerId.equals(customerId))
-            ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
-          .get();
-
-  Future<Customer?> findByName(String name) => (select(customers)
-        ..where((c) => c.name.lower().equals(name.toLowerCase())))
-      .getSingleOrNull();
-}
-
-LazyDatabase _open(String key) => LazyDatabase(() async {
-      final dir = await getApplicationDocumentsDirectory();
-      final file = File(p.join(dir.path, 'bolkhata.db'));
-      open.overrideFor(OperatingSystem.android, openCipherOnAndroid);
-      return NativeDatabase.createInBackground(file, setup: (db) {
-        db.execute("PRAGMA key = '$key';");
-      });
-    });

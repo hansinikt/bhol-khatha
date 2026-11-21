@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'data/local/database.dart';
 import 'features/home/home_screen.dart';
