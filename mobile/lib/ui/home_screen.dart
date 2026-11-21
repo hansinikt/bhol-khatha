@@ -5,8 +5,11 @@ import '../core/models.dart';
 import '../core/voice_session.dart';
 import '../l10n/languages.dart';
 import '../l10n/prompts.dart';
+import '../voice/gnani_client.dart';
+import '../voice/gnani_speech_input.dart';
 import '../voice/speech_input.dart';
 import '../voice/speech_output.dart';
+import '../voice/voice_input.dart';
 import 'customers_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -20,8 +23,15 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late final VoiceSession _session = VoiceSession(widget.store);
-  final SpeechInput _mic = SpeechInput();
-  final SpeechOutput _voice = SpeechOutput();
+  // Gnani when the app is run with --dart-define=GNANI_API_KEY=..., else phone.
+  static final GnaniClient? _gnani =
+      GnaniConfig.enabled ? GnaniClient(GnaniConfig.apiKey) : null;
+  final VoiceInput _phoneMic = SpeechInput();
+  late final VoiceInput? _gnaniMic =
+      _gnani == null ? null : GnaniSpeechInput(_gnani!);
+  bool _useGnani = GnaniConfig.enabled;
+  VoiceInput get _mic => (_useGnani ? _gnaniMic : null) ?? _phoneMic;
+  final SpeechOutput _voice = SpeechOutput(gnani: _gnani);
   final TextEditingController _typed = TextEditingController();
 
   AppLanguage _lang = kLanguages.first;
@@ -73,8 +83,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _toggleMic() async {
     if (_listening) {
+      setState(() {
+        _listening = false;
+        _heard = '…'; // Gnani is uploading/transcribing
+      });
       await _mic.stop(); // the final result arrives via onResult
-      if (mounted) setState(() => _listening = false);
       return;
     }
     await _voice.stop();
@@ -83,15 +96,21 @@ class _HomeScreenState extends State<HomeScreen> {
       _heard = '';
     });
     var submitted = false;
-    final ok = await _mic.start(
-      localeId: _lang.sttLocale,
+    final mic = _mic;
+    final ok = await mic.start(
+      lang: _lang,
       onResult: (words, isFinal) {
         if (!mounted) return;
         setState(() => _heard = words);
         if (isFinal && !submitted) {
           submitted = true;
           setState(() => _listening = false);
-          _submit(words);
+          if (words.trim().isEmpty) {
+            _showError(mic.lastError);
+            _show(SessionReply('notUnderstood', stage: _session.stage));
+          } else {
+            _submit(words);
+          }
         }
       },
       onDone: () {
@@ -100,10 +119,15 @@ class _HomeScreenState extends State<HomeScreen> {
     );
     if (!ok && mounted) {
       setState(() => _listening = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_t('uiSttUnavailable'))),
-      );
+      _showError(mic.lastError ?? _t('uiSttUnavailable'));
     }
+  }
+
+  void _showError(String? message) {
+    if (message == null || message.isEmpty || !mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), duration: const Duration(seconds: 6)),
+    );
   }
 
   Future<void> _confirm() async => _show(await _session.confirm());
@@ -126,6 +150,14 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('BolKhata'),
         actions: [
+          // Tap to switch engine live (e.g. if venue network blocks Gnani).
+          if (_gnaniMic != null)
+            TextButton(
+              onPressed: _listening
+                  ? null
+                  : () => setState(() => _useGnani = !_useGnani),
+              child: Text(_mic.engineName),
+            ),
           DropdownButton<AppLanguage>(
             value: _lang,
             underline: const SizedBox.shrink(),
