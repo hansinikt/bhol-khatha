@@ -1,4 +1,5 @@
 import 'nlu/intent_parser.dart';
+import 'nlu/number_normalizer.dart';
 
 enum VoiceState { idle, listening, parsing, clarifying, confirming, saved }
 
@@ -12,31 +13,48 @@ class VoiceSessionController {
     state = VoiceState.parsing;
     final parsed = IntentParser.parse(text);
 
+    // "Nahi, 430": fix the amount of the pending entry.
     if (parsed.intent == Intent.correction && pending != null) {
-      pending = ParsedUtterance(pending!.intent,
-          customerName: pending!.customerName, amount: parsed.amount);
-      state = VoiceState.confirming;
+      _route(ParsedUtterance(pending!.intent,
+          customerName: pending!.customerName, amount: parsed.amount));
       return;
     }
-    pending = parsed;
-    if (parsed.intent == Intent.unknown) {
+    // Answer to a clarification question: fill the missing field.
+    if (clarifyQuestion != null &&
+        pending != null &&
+        pending!.intent != Intent.unknown &&
+        parsed.intent == Intent.unknown) {
+      _route(ParsedUtterance(pending!.intent,
+          customerName: pending!.customerName ?? parsed.customerName,
+          amount: pending!.amount ?? NumberNormalizer.parse(text)));
+      return;
+    }
+    _route(parsed);
+  }
+
+  void _route(ParsedUtterance p) {
+    pending = p;
+    if (p.intent == Intent.unknown) {
       clarifyQuestion = 'unclear';
       state = VoiceState.clarifying;
-    } else if (parsed.intent != Intent.queryBalance &&
-        (parsed.amount == null || parsed.customerName == null)) {
-      clarifyQuestion = parsed.amount == null ? 'amount' : 'name';
+    } else if (p.customerName == null) {
+      clarifyQuestion = 'name';
+      state = VoiceState.clarifying;
+    } else if (p.intent != Intent.queryBalance && p.amount == null) {
+      clarifyQuestion = 'amount';
       state = VoiceState.clarifying;
     } else {
+      clarifyQuestion = null;
       state = VoiceState.confirming;
     }
   }
 
-  /// Returns the parsed entry for the caller to persist, then resets.
+  /// Returns the entry for the caller to persist, then resets.
   ParsedUtterance? confirm() {
     if (state != VoiceState.confirming) return null;
     final result = pending;
-    state = VoiceState.saved;
     pending = null;
+    state = VoiceState.saved;
     return result;
   }
 
