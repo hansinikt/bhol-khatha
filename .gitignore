@@ -1,0 +1,9 @@
+**/build/
+**/.dart_tool/
+**/android/local.properties
+.idea/
+*.iml
+mobile_gnani/ios/
+mobile_gnani/android/gradlew
+mobile_gnani/android/gradlew.bat
+mobile_gnani/android/gradle/

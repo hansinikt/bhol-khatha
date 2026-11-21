@@ -1,6 +1,0 @@
-{
-  "elements": {},
-  "imports": [
-    "package:bolkhata/domain/entities/ledger_entry.dart"
-  ]
-}

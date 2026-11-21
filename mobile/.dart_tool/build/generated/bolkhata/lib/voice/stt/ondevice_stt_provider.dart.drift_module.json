@@ -1,6 +1,0 @@
-{
-  "elements": {},
-  "imports": [
-    "package:bolkhata/voice/stt/stt_provider.dart"
-  ]
-}

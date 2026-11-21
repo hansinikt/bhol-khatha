@@ -1,6 +1,0 @@
-{
-  "elements": {},
-  "imports": [
-    "package:bolkhata/voice/nlu/number_normalizer.dart"
-  ]
-}

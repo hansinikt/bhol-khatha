@@ -1,8 +1,0 @@
-{
-  "elements": {},
-  "imports": [
-    "package:flutter/material.dart",
-    "package:bolkhata/data/local/database.dart",
-    "package:bolkhata/features/home/home_screen.dart"
-  ]
-}
