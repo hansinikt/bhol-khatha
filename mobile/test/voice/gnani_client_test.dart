@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:bolkhata/voice/gnani_client.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -65,5 +66,18 @@ void main() {
   test('language codes', () {
     expect(GnaniClient.sttLanguageCode('kn'), 'kn-IN,en-IN');
     expect(GnaniClient.sttLanguageCode('en'), 'en-IN');
+  });
+
+  test('fixWavHeader writes real RIFF and data sizes', () {
+    final header = <int>[
+      ...'RIFF'.codeUnits, 0xff, 0xff, 0xff, 0xff, ...'WAVE'.codeUnits,
+      ...'fmt '.codeUnits, 16, 0, 0, 0, ...List.filled(16, 0),
+      ...'data'.codeUnits, 0xff, 0xff, 0xff, 0xff,
+    ];
+    final wav = Uint8List.fromList([...header, ...List.filled(10, 7)]);
+    final fixed = GnaniClient.fixWavHeader(wav);
+    final bd = ByteData.sublistView(fixed);
+    expect(bd.getUint32(4, Endian.little), wav.length - 8);
+    expect(bd.getUint32(40, Endian.little), 10);
   });
 }

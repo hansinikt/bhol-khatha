@@ -94,6 +94,28 @@ class GnaniClient {
     if (res.statusCode != 200) {
       throw GnaniException(res.statusCode, utf8.decode(res.bodyBytes));
     }
-    return res.bodyBytes;
+    return fixWavHeader(res.bodyBytes);
+  }
+
+  /// Gnani streams WAV with unknown-length headers (0xFFFFFFFF), which
+  /// afplay and Android's MediaPlayer reject. Write the real sizes in.
+  static Uint8List fixWavHeader(Uint8List wav) {
+    if (wav.length < 12 || String.fromCharCodes(wav.sublist(0, 4)) != 'RIFF') {
+      return wav;
+    }
+    final out = Uint8List.fromList(wav);
+    final bd = ByteData.sublistView(out);
+    bd.setUint32(4, out.length - 8, Endian.little);
+    var pos = 12;
+    while (pos + 8 <= out.length) {
+      final id = String.fromCharCodes(out.sublist(pos, pos + 4));
+      if (id == 'data') {
+        bd.setUint32(pos + 4, out.length - pos - 8, Endian.little);
+        break;
+      }
+      final size = bd.getUint32(pos + 4, Endian.little);
+      pos += 8 + size + (size.isOdd ? 1 : 0);
+    }
+    return out;
   }
 }
